@@ -203,7 +203,12 @@ export default class LocationView extends React.Component {
                })
            }
         </MapView>
-
+        <Entypo
+          name={'location-pin'}
+          size={30}
+          color={this.props.markerColor}
+          style={{ backgroundColor: 'transparent' }}
+        />
         <TouchableOpacity
           style={[styles.currentLocBtn, { backgroundColor: this.props.markerColor }]}
           onPress={this._getCurrentLocation}
