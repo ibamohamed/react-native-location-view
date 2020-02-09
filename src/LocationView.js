@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, StyleSheet, Animated, Platform, UIManager, TouchableOpacity,Alert, Text, ViewPropTypes } from 'react-native';
+import { View, StyleSheet, Animated, Platform, UIManager, TouchableOpacity,Image, Text, ViewPropTypes } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Entypo from 'react-native-vector-icons/Entypo';
 import axios from 'axios';
@@ -174,12 +174,11 @@ export default class LocationView extends React.Component {
                            coordinate={{ latitude, longitude }}
                            calloutOffset={{ x: -8, y: 28 }}
                            calloutAnchor={{ x: 0.5, y: 0.4 }}
-                           image={this.props.image}
-                           style={this.props.markerStyle}
                            ref={ref => {
                              this.marker2 = ref;
                            }}
                        >
+                         <Image source={location.type == 1 ? this.props.marker1: this.props.marker2} style={{ width: 32, height: 50 }} />
                                     <Callout
               alphaHitTest
               tooltip
@@ -271,5 +270,8 @@ const styles = StyleSheet.create({
   customView: {
     width: 240,
     // height: 140,
+  },
+  marker: {
+    width: 50
   }
 });
