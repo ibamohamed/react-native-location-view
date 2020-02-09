@@ -1,15 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, StyleSheet, Animated, Platform, UIManager, 
-  TouchableOpacity, Text, ViewPropTypes } from 'react-native';
+import { View, StyleSheet, Animated, Platform, UIManager, TouchableOpacity,Alert, Text, ViewPropTypes } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Entypo from 'react-native-vector-icons/Entypo';
 import axios from 'axios';
 import Events from 'react-native-simple-events';
-import MapView from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
-import AutoCompleteInput from './AutoCompleteInput';
+import MapView, {
+  Marker,
+  Callout,
+  CalloutSubview,
+  ProviderPropType,
+} from 'react-native-maps';
 
+import CustomCallout from './CustomCallout';
 
 const PLACE_DETAIL_URL = 'https://maps.googleapis.com/maps/api/place/details/json';
 const DEFAULT_DELTA = { latitudeDelta: 0.015, longitudeDelta: 0.0121 };
@@ -28,9 +31,6 @@ export default class LocationView extends React.Component {
     onLocationSelect: PropTypes.func,
     debounceDuration: PropTypes.number,
     components: PropTypes.arrayOf(PropTypes.string),
-    timeout: PropTypes.number,
-    maximumAge: PropTypes.number,
-    enableHighAccuracy: PropTypes.bool
   };
 
   static defaultProps = {
@@ -39,9 +39,6 @@ export default class LocationView extends React.Component {
     onLocationSelect: () => ({}),
     debounceDuration: 300,
     components: [],
-    timeout: 15000,
-    maximumAge: Infinity,
-    enableHighAccuracy: true
   };
 
   constructor(props) {
@@ -55,6 +52,7 @@ export default class LocationView extends React.Component {
     Events.listen('InputBlur', this.constructor.displayName, this._onTextBlur);
     Events.listen('InputFocus', this.constructor.displayName, this._onTextFocus);
     Events.listen('PlaceSelected', this.constructor.displayName, this._onPlaceSelected);
+    this._getRegionForCoordinates(this.props.markers);
   }
 
   componentWillUnmount() {
@@ -70,7 +68,40 @@ export default class LocationView extends React.Component {
       ...DEFAULT_DELTA,
       ...this.props.initialLocation,
     },
+    selectedMarker: null
   };
+
+  _getRegionForCoordinates = (points) => {
+    let minX, maxX, minY, maxY;
+  
+    // init first point
+    ((point) => {
+      minX = point.latitude;
+      maxX = point.latitude;
+      minY = point.longitude;
+      maxY = point.longitude;
+    })(points[0]);
+  
+    // calculate rect
+    points.map((point) => {
+      minX = Math.min(minX, point.latitude);
+      maxX = Math.max(maxX, point.latitude);
+      minY = Math.min(minY, point.longitude);
+      maxY = Math.max(maxY, point.longitude);
+    });
+  
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    const deltaX = (maxX - minX);
+    const deltaY = (maxY - minY);
+
+    this.setState(prevState => ({...prevState, region: {
+      latitude: midX,
+      longitude: midY,
+      latitudeDelta: deltaX,
+      longitudeDelta: deltaY
+    }}))
+  }
 
   _animateInput = () => {
     Animated.timing(this.state.inputScale, {
@@ -81,13 +112,9 @@ export default class LocationView extends React.Component {
 
   _onMapRegionChange = region => {
     this._setRegion(region, false);
-    if (this.state.inFocus) {
-      this._input.blur();
-    }
   };
 
   _onMapRegionChangeComplete = region => {
-    this._input.fetchAddressForLocation(region);
   };
 
   _onTextFocus = () => {
@@ -101,34 +128,32 @@ export default class LocationView extends React.Component {
   };
 
   _setRegion = (region, animate = true) => {
+    this.marker2.hideCallout();
     this.state.region = { ...this.state.region, ...region };
     if (animate) this._map.animateToRegion(this.state.region);
   };
 
   _onPlaceSelected = placeId => {
-    this._input.blur();
     axios.get(`${PLACE_DETAIL_URL}?key=${this.props.apiKey}&placeid=${placeId}`).then(({ data }) => {
       let region = (({ lat, lng }) => ({ latitude: lat, longitude: lng }))(data.result.geometry.location);
       this._setRegion(region);
-      this.setState({placeDetails: data.result});
     });
   };
 
   _getCurrentLocation = () => {
-    const { timeout, maximumAge, enableHighAccuracy } = this.props;
-    Geolocation.getCurrentPosition(
-      position => {
-        const { latitude, longitude } = position.coords;
-        this._setRegion({latitude, longitude});
-      },
-      error => console.log(error.message),
-      {
-        enableHighAccuracy,
-        timeout,
-        maximumAge,
-      }
-    );
+    navigator.geolocation.getCurrentPosition(position => {
+      let location = (({ latitude, longitude }) => ({ latitude, longitude }))(position.coords);
+      this._setRegion(location);
+    });
   };
+
+  _onMarkerPress = (location) => {
+    this.setState(prevState=> ({...prevState, selectedMarker: location}))
+  }
+
+  _toKilometers = (distance) => {
+    return (distance / 1000).toFixed(1) + " " + this.props.kilometersText;
+  }
 
   render() {
     let { inputScale } = this.state;
@@ -140,25 +165,46 @@ export default class LocationView extends React.Component {
           region={this.state.region}
           showsMyLocationButton={true}
           showsUserLocation={false}
-          onPress={({ nativeEvent }) => this._setRegion(nativeEvent.coordinate)}
-          onRegionChange={this._onMapRegionChange}
-          onRegionChangeComplete={this._onMapRegionChangeComplete}
-        />
-        <Entypo
-          name={'location-pin'}
-          size={30}
-          color={this.props.markerColor}
-          style={{ backgroundColor: 'transparent' }}
-        />
-        <View style={styles.fullWidthContainer}>
-          <AutoCompleteInput
-            ref={input => (this._input = input)}
-            apiKey={this.props.apiKey}
-            style={[styles.input, { transform: [{ scale: inputScale }] }]}
-            debounceDuration={this.props.debounceDuration}
-            components={this.props.components}
-          />
-        </View>
+        >
+            { this.props.markers && this.props.markers.map((location, index) => {
+              const { latitude, longitude } = location;
+                   return (
+                       <MapView.Marker
+                           key={location.id}
+                           coordinate={{ latitude, longitude }}
+                           calloutOffset={{ x: -8, y: 28 }}
+                           calloutAnchor={{ x: 0.5, y: 0.4 }}
+                           image={this.props.image}
+                           style={this.props.markerStyle}
+                           ref={ref => {
+                             this.marker2 = ref;
+                           }}
+                       >
+                                    <Callout
+              alphaHitTest
+              tooltip
+              style={styles.customView}
+            >
+              <CustomCallout>
+                <Text style={this.props.markerDistanceStyle}>{this._toKilometers(location.distance)}</Text>
+                <Text style={this.props.markerNameStyle}>{location.name}</Text>
+                <Text style={this.props.markerAddressStyle}>{location.address}</Text>
+                <CalloutSubview
+                  onPress={() => this.props.showDetails(location)}
+                  style={[styles.calloutButton]}
+                >
+            <Text style={this.props.markerButtonStyle}>{this.props.markerButtonText}
+            <MaterialIcons name={this.props.arrowName} size={12} />
+            </Text>
+                </CalloutSubview>
+              </CustomCallout>
+            </Callout>
+                       </MapView.Marker>
+                   )
+               })
+           }
+        </MapView>
+
         <TouchableOpacity
           style={[styles.currentLocBtn, { backgroundColor: this.props.markerColor }]}
           onPress={this._getCurrentLocation}
@@ -167,7 +213,8 @@ export default class LocationView extends React.Component {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionButton, this.props.actionButtonStyle]}
-          onPress={() => this.props.onLocationSelect({ ...this.state.region, address: this._input.getAddress(), placeDetails: this.state.placeDetails })}
+          onPress={() => this.props.onLocationSelect({ ...this.state.region
+          })}
         >
           <View>
             <Text style={[styles.actionText, this.props.actionTextStyle]}>{this.props.actionText}</Text>
@@ -221,4 +268,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 23,
   },
+  customView: {
+    width: 240,
+    // height: 140,
+  }
 });
