@@ -13,7 +13,9 @@ export default class CustomCallout extends React.Component {
     return (
       <View style={[styles.container, this.props.style]}>
         <View style={styles.bubble}>
-          <View style={[styles.amount, this.props.language === 'ar' ? styles.arabic: styles.english]}>{this.props.children}</View>
+          <View style={[styles.amount, this.props.language === 'ar' ? styles.arabic : styles.english]}>
+            {this.props.children}
+          </View>
         </View>
         <View style={styles.arrowBorder} />
         <View style={styles.arrow} />
@@ -39,10 +41,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 6,
     borderColor: 'transparent',
-    borderWidth: 0.5
+    borderWidth: 0.5,
   },
   amount: {
-    flex: 1
+    flex: 1,
   },
   arrow: {
     backgroundColor: 'transparent',
@@ -61,9 +63,9 @@ const styles = StyleSheet.create({
     marginTop: -0.5,
   },
   arabic: {
-    alignItems: 'flex-end'
+    alignItems: 'flex-end',
   },
   english: {
-    alignItems: 'flex-start'
-  }
+    alignItems: 'flex-start',
+  },
 });
