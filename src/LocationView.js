@@ -185,6 +185,13 @@ export default class LocationView extends React.Component {
               style={styles.customView}
             >
               <CustomCallout language={this.props.language}>
+              <CalloutSubview
+           onPress={() => this.marker2.hideCallout()}
+                  style={this.props.language === 'ar' ? styles.arabic: styles.english}
+                >
+              <MaterialIcons style={this.props.closeBtnStyle} name="close" size={12} />
+                </CalloutSubview>
+
                 <Text style={this.props.markerDistanceStyle}>{this._toKilometers(location.distance)}</Text>
                 <Text style={this.props.markerNameStyle}>{location.name}</Text>
                 <Text style={this.props.markerAddressStyle}>{location.address}</Text>
@@ -215,7 +222,7 @@ export default class LocationView extends React.Component {
         >
           <MaterialIcons name={'my-location'} color={'white'} size={25} />
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={[styles.actionButton, this.props.actionButtonStyle]}
           onPress={() => this.props.onLocationSelect({ ...this.state.region
           })}
@@ -223,7 +230,7 @@ export default class LocationView extends React.Component {
           <View>
             <Text style={[styles.actionText, this.props.actionTextStyle]}>{this.props.actionText}</Text>
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         {this.props.children}
       </View>
     );
