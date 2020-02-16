@@ -184,13 +184,13 @@ export default class LocationView extends React.Component {
               tooltip
               style={styles.customView}
             >
-              <CustomCallout>
+              <CustomCallout language={this.props.language}>
                 <Text style={this.props.markerDistanceStyle}>{this._toKilometers(location.distance)}</Text>
                 <Text style={this.props.markerNameStyle}>{location.name}</Text>
                 <Text style={this.props.markerAddressStyle}>{location.address}</Text>
                 <CalloutSubview
                   onPress={() => this.props.showDetails(location)}
-                  style={[styles.calloutButton]}
+                  style={[styles.calloutButton, this.props.language === 'ar' ? styles.arabic: styles.english]}
                 >
             <Text style={this.props.markerButtonStyle}>{this.props.markerButtonText}
             <MaterialIcons name={this.props.arrowName} size={12} />
@@ -273,10 +273,18 @@ const styles = StyleSheet.create({
     fontSize: 23,
   },
   customView: {
-    width: 240,
-    // height: 140,
+    width: 240
   },
   marker: {
     width: 50
+  },
+  calloutButton: {
+    flex: 1
+  },
+  arabic: {
+    alignSelf: 'flex-start'
+  },
+  english: {
+    alignSelf: 'flex-end'
   }
 });
