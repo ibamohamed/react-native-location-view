@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   Image,
   Text,
-  ViewPropTypes,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -185,31 +184,68 @@ export default class LocationView extends React.Component {
                     source={location.type == 1 ? this.props.marker1 : this.props.marker2}
                     style={{ width: 32, height: 50 }}
                   />
-                  <Callout alphaHitTest tooltip style={styles.customView}>
-                    <CustomCallout language={this.props.language}>
-                      <CalloutSubview
-                        onPress={() => this.marker2.hideCallout()}
-                        style={this.props.language === 'ar' ? styles.arabic : styles.english}
-                      >
-                        <MaterialIcons style={this.props.closeBtnStyle} name="close" size={12} />
-                      </CalloutSubview>
+                      {
+                        Platform.OS === "ios" &&
+                        (
+                      <Callout alphaHitTest tooltip style={styles.customView}>
+                          <CustomCallout language={this.props.language}>
+                          <CalloutSubview
+                            onPress={() => this.marker2.hideCallout()}
+                            style={this.props.language === 'ar' ? styles.arabic : styles.english}
+                          >
+                            <MaterialIcons style={this.props.closeBtnStyle} name="close" size={12} />
+                          </CalloutSubview>
+    
+                          <Text style={this.props.markerDistanceStyle}>{this._toKilometers(location.distance)}</Text>
+                          <Text style={this.props.markerNameStyle}>{location.name}</Text>
+                          <Text style={this.props.markerAddressStyle}>{location.address}</Text>
+                          <CalloutSubview
+                            onPress={() => this.props.showDetails(location)}
+                            style={[styles.calloutButton, this.props.language === 'ar' ? styles.arabic : styles.english]}
+                          >
+                            <View style={[{display: 'flex', flexDirection: 'row', alignItems:'center'}]}>
+                            <Text style={this.props.markerButtonStyle}>
+                              {this.props.markerButtonText}
+                            </Text>
+                              <MaterialIcons style={this.props.markerButtonStyle} name={this.props.arrowName} size={14} />
+                            </View>
+                          </CalloutSubview>
+                        </CustomCallout>
+                        </Callout>
+                        )
+                      }
 
-                      <Text style={this.props.markerDistanceStyle}>{this._toKilometers(location.distance)}</Text>
-                      <Text style={this.props.markerNameStyle}>{location.name}</Text>
-                      <Text style={this.props.markerAddressStyle}>{location.address}</Text>
-                      <CalloutSubview
-                        onPress={() => this.props.showDetails(location)}
-                        style={[styles.calloutButton, this.props.language === 'ar' ? styles.arabic : styles.english]}
-                      >
-                        <View style={[{display: 'flex', flexDirection: 'row', alignItems:'center'}]}>
-                        <Text style={this.props.markerButtonStyle}>
-                          {this.props.markerButtonText}
-                        </Text>
-                          <MaterialIcons style={this.props.markerButtonStyle} name={this.props.arrowName} size={14} />
-                        </View>
-                      </CalloutSubview>
-                    </CustomCallout>
-                  </Callout>
+                      {
+                        Platform.OS === "android" &&
+                        (
+                          <Callout alphaHitTest tooltip style={styles.customView}>
+                          <CustomCallout language={this.props.language}>
+                          {/* <View
+                            onPress={() => this.marker2.hideCallout()}
+                            style={this.props.language === 'ar' ? styles.arabic : styles.english}
+                          >
+                            <MaterialIcons style={this.props.closeBtnStyle} name="close" size={12} />
+                          </View> */}
+    
+                          <Text style={this.props.markerDistanceStyle}>{this._toKilometers(location.distance)}</Text>
+                          <Text style={this.props.markerNameStyle}>{location.name}</Text>
+                          <Text style={this.props.markerAddressStyle}>{location.address}</Text>
+                          {/* <View
+                            onPress={() => this.props.showDetails(location)}
+                            style={[styles.calloutButton, this.props.language === 'ar' ? styles.arabic : styles.english]}
+                          >
+                            <View style={[{display: 'flex', flexDirection: 'row', alignItems:'center'}]}>
+                            <Text style={this.props.markerButtonStyle}>
+                              {this.props.markerButtonText}
+                            </Text>
+                              <MaterialIcons style={this.props.markerButtonStyle} name={this.props.arrowName} size={14} />
+                            </View>
+                          </View> */}
+                        </CustomCallout>
+                        </Callout>
+                        )
+                      }
+
                 </MapView.Marker>
               );
             })}
