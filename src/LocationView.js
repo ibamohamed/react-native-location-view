@@ -201,10 +201,12 @@ export default class LocationView extends React.Component {
                         onPress={() => this.props.showDetails(location)}
                         style={[styles.calloutButton, this.props.language === 'ar' ? styles.arabic : styles.english]}
                       >
+                        <View style={[{display: 'flex', flexDirection: 'row', alignItems:'center'}]}>
                         <Text style={this.props.markerButtonStyle}>
                           {this.props.markerButtonText}
-                          <MaterialIcons name={this.props.arrowName} size={12} />
                         </Text>
+                          <MaterialIcons style={this.props.markerButtonStyle} name={this.props.arrowName} size={14} />
+                        </View>
                       </CalloutSubview>
                     </CustomCallout>
                   </Callout>
